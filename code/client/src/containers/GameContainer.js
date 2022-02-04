@@ -381,9 +381,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
 
   const boarderTileCard = (gridRow, gridCol) => {
     for (let neighbour of gridNeighbours(gridRow, gridCol)){
-      // console.log(gridNeighbours(gridRow, gridCol))
       if (Object.keys(neighbour).length !== 0){
-        // console.log(neighbour)
         if (neighbour["name"].substring(0, 4) === "path" || neighbour["name"].substring(0, 5) === "start") return true
       }
     }
