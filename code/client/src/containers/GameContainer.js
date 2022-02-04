@@ -55,7 +55,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     setData(getData())
     // .then(data => setData(data[0]));
 
-    // setPlayerTurns(playerObjects);
+    setPlayerTurns(playerObjects);
   }, [])
   
   // useEffect (() => {
