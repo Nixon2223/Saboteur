@@ -4,7 +4,7 @@ import HandList from '../components/HandList';
 import SideBar from '../components/SideBar';
 import Loading from '../components/Loading'
 import {DragDropContext, Droppable, Draggable} from 'react-beautiful-dnd'
-import { io } from 'socket.io-client'
+// import { io } from 'socket.io-client'
 
 import {getData} from '../services/FetchService'
 import {setUpPlayers, passTurn, checkForWin, winner, addScore} from '../services/GameService'
@@ -43,13 +43,13 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
 
   });
 
-  useEffect(() => {
-    socket.on('connect', ()=>console.log(socket.id))
-    socket.on('connect_error', ()=>{
-      setTimeout(()=>socket.connect(),5000)
-    })
-    return () => socket.off('connect')
-}, [])
+//   useEffect(() => {
+//     socket.on('connect', ()=>console.log(socket.id))
+//     socket.on('connect_error', ()=>{
+//       setTimeout(()=>socket.connect(),5000)
+//     })
+//     return () => socket.off('connect')
+// }, [])
 
   useEffect (() => {
     getData()
@@ -58,18 +58,18 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     setPlayerTurns(playerObjects);
   }, [])
   
-  useEffect (() => {
-    socket.on('receive-grid-state', gridState => {
-      setGridState(gridState)
-    })
-    socket.on('receive-deck', deck => {
-      setDeck(deck)
-    })
-    return () => {
-      socket.off("receive-grid-state");
-      socket.off("receive-deck")
-    };
-  }, [])
+  // useEffect (() => {
+  //   socket.on('receive-grid-state', gridState => {
+  //     setGridState(gridState)
+  //   })
+  //   socket.on('receive-deck', deck => {
+  //     setDeck(deck)
+  //   })
+  //   // return () => {
+  //   //   socket.off("receive-grid-state");
+  //   //   socket.off("receive-deck")
+  //   // };
+  // }, [])
 
   
   useEffect(() => {
