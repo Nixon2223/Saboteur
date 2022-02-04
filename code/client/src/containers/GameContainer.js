@@ -36,12 +36,12 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
       [ {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]    
   ])
 
-  const socket = io('http://localhost:5000', {
-    transports: ["websocket", "polling"],
-    rememberUpgrade: true,
-    maxHttpBufferSize: 1e8,
+  // const socket = io('http://localhost:5000', {
+  //   transports: ["websocket", "polling"],
+  //   rememberUpgrade: true,
+  //   maxHttpBufferSize: 1e8,
 
-  });
+  // });
 
 //   useEffect(() => {
 //     socket.on('connect', ()=>console.log(socket.id))
