@@ -54,7 +54,6 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
   useEffect (() => {
     setData(getData())
     // .then(data => setData(data[0]));
-
     setPlayerTurns(playerObjects);
   }, [])
   
@@ -81,6 +80,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
       buildDeck();
       buildCharDeck();
       placeStartCards();
+      console.log(deck)
       
     }
   }, [data])
@@ -105,6 +105,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     }
     // Shuffle deck
     shuffleArray(deck);
+    console.log (deck)
     setDeck(deck);
     // socket.emit('update-deck', deck);
   }
@@ -116,9 +117,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
       currentIndex--;
       [array[currentIndex], array[randomIndex]] = [
         array[randomIndex], array[currentIndex]];
-    }
-    setDeck(deck)
-    
+    }    
     return array
   }
 
