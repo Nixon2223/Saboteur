@@ -106,7 +106,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     // Shuffle deck
     shuffleArray(deck);
     setDeck(deck);
-    socket.emit('update-deck', deck);
+    // socket.emit('update-deck', deck);
   }
 
   const shuffleArray = (array) => {
@@ -129,7 +129,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     // shuffle chart card
     const shuffledDeck = shuffleCharArray(tempDeck);
     setCharDeck(shuffledDeck);
-    socket.emit('chart-deck', charDeck)
+    // socket.emit('chart-deck', charDeck)
   }
  // shuffle charArray function
   const shuffleCharArray = (array) => {
@@ -161,7 +161,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     if(startCardsArray[2].name === "gold_card") goldCardRef = [5, 9]
     setGridState(tempArr)
     setGoldCardRef(goldCardRef)
-    socket.emit('update-grid-state', gridState)
+    // socket.emit('update-grid-state', gridState)
   }
 
   const dealHand = () => {
@@ -213,7 +213,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
       setDeck(result[0]);
     }
     setButtonToggle(!buttonToggle)
-    socket.emit('update-deck', deck)
+    // socket.emit('update-deck', deck)
   }
 
   const handleEndClick = () => {
@@ -548,7 +548,7 @@ const cpuPlay = (hand, grid) => {
           const tempArr = gridState
           tempArr[row].splice([col], 1, playerHand[result.source.index])
           setGridState(tempArr)
-          socket.emit('update-grid-state', gridState)
+          // socket.emit('update-grid-state', gridState)
           //Discard from hand
           const items = Array.from(playerHand)
           items.splice(result.source.index, 1)
