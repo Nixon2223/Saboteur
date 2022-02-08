@@ -347,14 +347,6 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     return neighboursEntries
   }
 
-  // helper function for comparing arrays
-  function arrayEquals(a, b) {
-    return Array.isArray(a) &&
-        Array.isArray(b) &&
-        a.length === b.length &&
-        a.every((val, index) => val === b[index]);
-  }
-
   const cardFitsNeighbours = (card, neighbours) => {
     let cardEntries = []
     if (card.inverted){
