@@ -220,15 +220,6 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     }
   }
 
-  function wait(milliseconds) {
-    var start = new Date().getTime();
-    for (var i = 0; i < 1e7; i++) {
-      if ((new Date().getTime() - start) > milliseconds){
-        break;
-      }
-    }
-  }
-
   // controls players turns
   useEffect(() => {
     // Don't Start if false

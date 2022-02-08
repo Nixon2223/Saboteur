@@ -106,6 +106,7 @@ const gridNeighbours = (row, col, gridState) => {
       cardEntries = [card.entries.top, card.entries.right, card.entries.bottom, card.entries.left ]
     }
     let resultNeighboursEntries = neighboursEntries(neighbours)
+    console.log(resultNeighboursEntries)
     let results = []
     let i = 0
     for (let result of resultNeighboursEntries) {
@@ -115,10 +116,10 @@ const gridNeighbours = (row, col, gridState) => {
     return !results.includes(false)
   } 
 
-  const boarderTileCard = (gridRow, gridCol, gridState) => {
+  const boarderFlippedCard = (gridRow, gridCol, gridState) => {
     for (let neighbour of gridNeighbours(gridRow, gridCol, gridState)){
       if (Object.keys(neighbour).length !== 0){
-        if (neighbour["name"].substring(0, 4) === "path" || neighbour["name"].substring(0, 5) === "start") return true
+        if (neighbour.flipped == false) return true
       }
     }
     return false
@@ -126,7 +127,6 @@ const gridNeighbours = (row, col, gridState) => {
 
   const connectionWithTile = (card, gridRow, gridCol, gridState) => {
     let resultNeighboursEntries = neighboursEntries(gridNeighbours(gridRow, gridCol, gridState))
-    console.log(resultNeighboursEntries)
     let cardEntries = []
     if (card.inverted){
       cardEntries = [card.entries.bottom, card.entries.left, card.entries.top, card.entries.right]
@@ -171,11 +171,11 @@ export const flipNeighbours = (card, gridRow, gridCol, gridState) => {
 
 export const legalMove = (cardSelected, gridRow, gridCol, gridState) => {
     // check that card being placed boarders a tile card
-    if (!boarderTileCard(gridRow, gridCol, gridState)) return console.log("Cant be placed here!")
+    if (!boarderFlippedCard(gridRow, gridCol, gridState)) return
     // check if card makes path with at least one bordering card
-    if (!connectionWithTile(cardSelected, gridRow, gridCol, gridState)) return console.log("Cant be placed here!")
+    if (!connectionWithTile(cardSelected, gridRow, gridCol, gridState)) return 
     // check if card is already placed in grid location
-    if (Object.keys(gridState[gridRow][gridCol]).length !== 0) return console.log("Card already placed here!")
+    if (Object.keys(gridState[gridRow][gridCol]).length !== 0) return
     // check if card fits in grid position with neighbours
     else if (cardFitsNeighbours(cardSelected, gridNeighbours(gridRow, gridCol, gridState))){
       // check for end card

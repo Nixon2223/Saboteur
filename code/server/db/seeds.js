@@ -320,8 +320,8 @@ db.game.insertOne({
             "inverted": false,
             "flipped": true,
             "entries": {
-                "top": true,
-                "right": true,
+                "top": false,
+                "right": false,
                 "bottom": true,
                 "left": true
             }
