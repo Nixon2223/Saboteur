@@ -7,7 +7,7 @@ import {DragDropContext, Droppable, Draggable} from 'react-beautiful-dnd'
 import { io } from 'socket.io-client'
 
 import {getData} from '../services/FetchService'
-import {setUpPlayers, passTurn, checkForWin, winner, addScore} from '../services/GameService'
+import {setUpPlayers, passTurn, checkForWin, winner, addScore, legalMove} from '../services/GameService'
 import SplashContainer from './SplashContainer';
 
 function GameContainer({player, playerObjects, gameType, roomID}) {
@@ -294,156 +294,6 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     setPlayerHand(hand)
   }
 
-  const gridNeighbours = (row, col) => {
-    let neighbours = []
-    row = Number(row)
-    col = Number(col)
-    if (gridState[row - 1] !== undefined) {
-      gridState[row - 1][col] !== undefined ? neighbours.push(Object.assign({}, gridState[row - 1][col])) : neighbours.push({})
-    } else {
-      neighbours.push({})
-    }
-    gridState[row][col + 1] !== undefined ? neighbours.push(Object.assign({}, gridState[row][col + 1])) : neighbours.push({})
-    if (gridState[row + 1] !== undefined) {
-      gridState[row + 1][col] !== undefined ? neighbours.push(Object.assign({}, gridState[row + 1][col])) : neighbours.push({})
-    } else {
-      neighbours.push({})
-    }
-    gridState[row][col- 1] !== undefined ? neighbours.push(Object.assign({}, gridState[row][col - 1])) : neighbours.push({})
-    // [top, right, bottom, left]
-    // console.log(neighbours)
-    return neighbours
-  }
-
-
-  const neighboursEntries = (neighbours) => {
-     //connects open or closed (true or false)
-    let neighboursEntries = []
-    // console.log(neighbours[0])
-    // console.log(neighbours[1])
-    // console.log(neighbours[2])
-    // console.log(neighbours[3])
-    if (Object.keys(neighbours[0]).length !== 0){
-    neighbours[0].inverted ? neighboursEntries.push(neighbours[0].entries.top) : neighboursEntries.push(neighbours[0].entries.bottom)
-    }else{neighboursEntries.push(null)}
-
-    if (Object.keys(neighbours[1]).length !== 0){
-    neighbours[1].inverted ? neighboursEntries.push(neighbours[1].entries.right) : neighboursEntries.push(neighbours[1].entries.left)
-    }else{neighboursEntries.push(null)}
-
-    if (Object.keys(neighbours[2]).length !== 0){
-    neighbours[2].inverted ? neighboursEntries.push(neighbours[2].entries.bottom) : neighboursEntries.push(neighbours[2].entries.top)
-    }else{neighboursEntries.push(null)}
-
-    if (Object.keys(neighbours[3]).length !== 0){
-    neighbours[3].inverted ? neighboursEntries.push(neighbours[3].entries.left) : neighboursEntries.push(neighbours[3].entries.right)
-    }else{neighboursEntries.push(null)}
-
-    // [top, right, bottom, left]
-    // null for empty or boarder tiles
-    // console.log(neighboursEntries)
-    return neighboursEntries
-  }
-
-  const cardFitsNeighbours = (card, neighbours) => {
-    let cardEntries = []
-    if (card.inverted){
-      cardEntries = [card.entries.bottom, card.entries.left, card.entries.top, card.entries.right]
-    } else {
-      cardEntries = [card.entries.top, card.entries.right, card.entries.bottom, card.entries.left ]
-    }
-    let resultNeighboursEntries = neighboursEntries(neighbours)
-
-    // console.log(resultNeighboursEntries)
-    // console.log(cardEntries)
-
-    let results = []
-    let i = 0
-    for (let result of resultNeighboursEntries) {
-      (result === null) ? results.push(true) : results.push(result === cardEntries[i])
-      i += 1
-    }
-    // console.log(results)
-    // console.log(arrayEquals(cardEntries, resultNeighboursEntries))
-
-    return !results.includes(false)
-  } 
-
-  const boarderTileCard = (gridRow, gridCol) => {
-    for (let neighbour of gridNeighbours(gridRow, gridCol)){
-      // console.log(gridNeighbours(gridRow, gridCol))
-      if (Object.keys(neighbour).length !== 0){
-        // console.log(neighbour)
-        if (neighbour["name"].substring(0, 4) === "path" || neighbour["name"].substring(0, 5) === "start") return true
-      }
-    }
-    return false
-  }
-
-  const checkIfMakesPath = (card, gridRow, gridCol) => {
-    let tempNeighbours = []
-    for (let neighbour of gridNeighbours(gridRow, gridCol)){
-      if (Object.keys(neighbour).length === 0){
-        tempNeighbours.push({})
-      }
-      else if (neighbour.name.substring(0, 4) !== "path" && neighbour.name.substring(0, 5) !== "start"){
-        tempNeighbours.push({})
-      }
-      else {
-        tempNeighbours.push(neighbour)
-      }
-      }
-    let resultNeighboursEntries = neighboursEntries(tempNeighbours)
-    let cardEntries = []
-    if (card.inverted){
-      cardEntries = [card.entries.bottom, card.entries.left, card.entries.top, card.entries.right]
-    } else {
-      cardEntries = [card.entries.top, card.entries.right, card.entries.bottom, card.entries.left ]
-    }
-    let results = []
-    var i = 0
-    for (let result of resultNeighboursEntries) {
-      (result === true && cardEntries[i] === true ) ? results.push(true) : results.push(false)
-      i += 1
-    }
-    return results.includes(true)
-  }
-
-
-  const checkFlipEndCard = (gridRow, gridCol) => {
-    let row = Number(gridRow)
-    let col = Number(gridCol)
-    let tempGrid = Object.assign({}, gridState)
-    let tempNeighbours = gridNeighbours(row, col)
-
-      if (Object.keys(tempNeighbours[0]).length !== 0) {
-        if (tempNeighbours[0].name.substring(0, 4) === "coal" || tempNeighbours[0].name.substring(0, 4) === "gold"){
-          tempGrid[row - 1][col].flipped = false
-        }
-      }
-
-      if (Object.keys(tempNeighbours[1]).length !== 0) {
-        if (tempNeighbours[1].name.substring(0, 4) === "coal" || tempNeighbours[1].name.substring(0, 4) === "gold"){
-          tempGrid[row][col + 1].flipped = false
-        }
-      }
-
-      if (Object.keys(tempNeighbours[2]).length !== 0) {
-        if (tempNeighbours[2].name.substring(0, 4) === "coal" || tempNeighbours[2].name.substring(0, 4) === "gold"){
-          tempGrid[row + 1][col].flipped = false
-        }
-      }
-
-      if (Object.keys(tempNeighbours[3]).length !== 0) {
-        if (tempNeighbours[3].name.substring(0, 4) === "coal" || tempNeighbours[3].name.substring(0, 4) === "gold"){
-          tempGrid[row][col - 1].flipped = false
-        }
-      }
-    setGridState(tempGrid)
-  }
-
-
-
   const cpuTurn = (cpuPlayer, grid, deck) => {
     const tempDeck = Object.assign([], deck);
     const tempCpu = Object.assign({}, cpuPlayer);
@@ -488,26 +338,6 @@ const cpuPlay = (hand, grid) => {
     return []
 }
 
-
-
-
-  const legalMove = (cardSelected, gridRow, gridCol) => {
-    // check that card being placed boarders a tile card
-    if (!boarderTileCard(gridRow, gridCol)) return console.log("Cant be placed here!")
-    // check if card makes path with at least one bordering card
-    if (!checkIfMakesPath(cardSelected, gridRow, gridCol)) return console.log("Cant be placed here!")
-    // check if card is already placed in grid location
-    if (Object.keys(gridState[gridRow][gridCol]).length !== 0) return console.log("Card already placed here!")
-    // check if card fits in grid position with neighbours
-    else if (cardFitsNeighbours(cardSelected, gridNeighbours(gridRow, gridCol))){
-      // check for end card
-      checkFlipEndCard(gridRow, gridCol)
-      return true
-    } 
-    else return false
-  }
-
-
   function handleOnDragEnd(result){
 
     const playerID = result.source.droppableId.split("-").pop();
@@ -536,8 +366,8 @@ const cpuPlay = (hand, grid) => {
         const cardBeingPickedUp = playerHand[result.source.index]
         const row = result.destination.droppableId.substring(5,6)
         const col = result.destination.droppableId.substring(7)
-        if (legalMove(cardBeingPickedUp, row, col) === true){
-          const tempArr = gridState
+        if (legalMove(cardBeingPickedUp, row, col, Object.assign([], gridState)) === true){
+          const tempArr = Object.assign([], gridState)
           tempArr[row].splice([col], 1, playerHand[result.source.index])
           setGridState(tempArr)
           socket.emit('update-grid-state', gridState)
