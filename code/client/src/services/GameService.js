@@ -50,17 +50,17 @@ const gridNeighbours = (row, col, gridState) => {
     row = Number(row)
     col = Number(col)
     if (gridState[row - 1] !== undefined) {
-      gridState[row - 1][col] !== undefined ? neighbours.push(Object.assign({}, gridState[row - 1][col])) : neighbours.push({})
+      gridState[row - 1][col] !== undefined ? neighbours.push(gridState[row - 1][col]) : neighbours.push({})
     } else {
       neighbours.push({})
     }
-    gridState[row][col + 1] !== undefined ? neighbours.push(Object.assign({}, gridState[row][col + 1])) : neighbours.push({})
+    gridState[row][col + 1] !== undefined ? neighbours.push(gridState[row][col + 1]) : neighbours.push({})
     if (gridState[row + 1] !== undefined) {
-      gridState[row + 1][col] !== undefined ? neighbours.push(Object.assign({}, gridState[row + 1][col])) : neighbours.push({})
+      gridState[row + 1][col] !== undefined ? neighbours.push(gridState[row + 1][col]) : neighbours.push({})
     } else {
       neighbours.push({})
     }
-    gridState[row][col- 1] !== undefined ? neighbours.push(Object.assign({}, gridState[row][col - 1])) : neighbours.push({})
+    gridState[row][col- 1] !== undefined ? neighbours.push(gridState[row][col - 1]) : neighbours.push({})
 
     // [top, right, bottom, left]
     return neighbours
@@ -72,25 +72,25 @@ const gridNeighbours = (row, col, gridState) => {
     if (Object.keys(neighbours[0]).length !== 0){
         if(neighbours[0].flipped !== true){
             neighbours[0].inverted ? neighboursEntries.push(neighbours[0].entries.top) : neighboursEntries.push(neighbours[0].entries.bottom)
-        }
+        }else{neighboursEntries.push(null)}
     }else{neighboursEntries.push(null)}
 
     if (Object.keys(neighbours[1]).length !== 0){
         if(neighbours[1].flipped !== true){
             neighbours[1].inverted ? neighboursEntries.push(neighbours[1].entries.right) : neighboursEntries.push(neighbours[1].entries.left)
-        }
+        }else{neighboursEntries.push(null)}
     }else{neighboursEntries.push(null)}
 
     if (Object.keys(neighbours[2]).length !== 0){
         if(neighbours[2].flipped !== true){
             neighbours[2].inverted ? neighboursEntries.push(neighbours[2].entries.bottom) : neighboursEntries.push(neighbours[2].entries.top)
-        }
+        }else{neighboursEntries.push(null)}
     }else{neighboursEntries.push(null)}
 
     if (Object.keys(neighbours[3]).length !== 0){
         if(neighbours[3].flipped !== true){
             neighbours[3].inverted ? neighboursEntries.push(neighbours[3].entries.left) : neighboursEntries.push(neighbours[3].entries.right)
-        }
+        }else{neighboursEntries.push(null)}
     }else{neighboursEntries.push(null)}
 
     // [top, right, bottom, left]
@@ -124,8 +124,9 @@ const gridNeighbours = (row, col, gridState) => {
     return false
   }
 
-  const checkIfMakesConnection = (card, gridRow, gridCol, gridState) => {
+  const connectionWithTile = (card, gridRow, gridCol, gridState) => {
     let resultNeighboursEntries = neighboursEntries(gridNeighbours(gridRow, gridCol, gridState))
+    console.log(resultNeighboursEntries)
     let cardEntries = []
     if (card.inverted){
       cardEntries = [card.entries.bottom, card.entries.left, card.entries.top, card.entries.right]
@@ -143,16 +144,27 @@ const gridNeighbours = (row, col, gridState) => {
   }
 
 
-export const flipNeighbours = (gridRow, gridCol, gridState) => {
+export const flipNeighbours = (card, gridRow, gridCol, gridState) => {
     let row = Number(gridRow)
     let col = Number(gridCol)
     let tempGrid = Object.assign([], gridState)
     let neighbours = gridNeighbours(row, col, tempGrid)
 
-    for (let neighbour of neighbours)
-      if (Object.keys(neighbour).length !== 0 && 'flipped' in neighbour) {
-        neighbour.flipped = false
-      }
+    let cardEntries = []
+    if (card.inverted){
+      cardEntries = [card.entries.bottom, card.entries.left, card.entries.top, card.entries.right]
+    } else {
+      cardEntries = [card.entries.top, card.entries.right, card.entries.bottom, card.entries.left ]
+    }
+
+    let i = 0
+    for (let neighbour of neighbours){
+        if (Object.keys(neighbour).length !== 0 && 'flipped' in neighbour && cardEntries[i] == true) {
+                neighbour.flipped = false
+        }
+        i += 1
+    }
+
     return tempGrid
   }
 
@@ -161,7 +173,7 @@ export const legalMove = (cardSelected, gridRow, gridCol, gridState) => {
     // check that card being placed boarders a tile card
     if (!boarderTileCard(gridRow, gridCol, gridState)) return console.log("Cant be placed here!")
     // check if card makes path with at least one bordering card
-    if (!checkIfMakesConnection(cardSelected, gridRow, gridCol, gridState)) return console.log("Cant be placed here!")
+    if (!connectionWithTile(cardSelected, gridRow, gridCol, gridState)) return console.log("Cant be placed here!")
     // check if card is already placed in grid location
     if (Object.keys(gridState[gridRow][gridCol]).length !== 0) return console.log("Card already placed here!")
     // check if card fits in grid position with neighbours

@@ -329,6 +329,7 @@ const cpuPlay = (hand, grid) => {
           if (legalMove(card, row, col, gridState) === true){
             grid[row].splice(col, 1, hand[i])
             hand.splice(i, 1)
+            grid = flipNeighbours(card, row, col, grid)
             return [hand, grid, i]
           }
         }
@@ -367,9 +368,9 @@ const cpuPlay = (hand, grid) => {
         const row = result.destination.droppableId.substring(5,6)
         const col = result.destination.droppableId.substring(7)
         if (legalMove(cardBeingPickedUp, row, col, Object.assign([], gridState)) === true){
-          flipNeighbours(row, col, gridState)
-          const tempArr = Object.assign([], gridState)
+          let tempArr = Object.assign([], gridState)
           tempArr[row].splice([col], 1, playerHand[result.source.index])
+          tempArr = flipNeighbours(cardBeingPickedUp, row, col, tempArr)
           setGridState(tempArr)
           socket.emit('update-grid-state', gridState)
           //Discard from hand
