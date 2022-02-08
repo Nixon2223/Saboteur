@@ -49,7 +49,6 @@ const gridNeighbours = (row, col, gridState) => {
     let neighbours = []
     row = Number(row)
     col = Number(col)
-    console.log(gridState)
     if (gridState[row - 1] !== undefined) {
       gridState[row - 1][col] !== undefined ? neighbours.push(Object.assign({}, gridState[row - 1][col])) : neighbours.push({})
     } else {
@@ -144,7 +143,7 @@ const gridNeighbours = (row, col, gridState) => {
   }
 
 
-  const flipNeighbours = (gridRow, gridCol, gridState) => {
+export const flipNeighbours = (gridRow, gridCol, gridState) => {
     let row = Number(gridRow)
     let col = Number(gridCol)
     let tempGrid = Object.assign([], gridState)
@@ -168,7 +167,6 @@ export const legalMove = (cardSelected, gridRow, gridCol, gridState) => {
     // check if card fits in grid position with neighbours
     else if (cardFitsNeighbours(cardSelected, gridNeighbours(gridRow, gridCol, gridState))){
       // check for end card
-      flipNeighbours(gridRow, gridCol, gridState)
       return true
     } 
     else return false

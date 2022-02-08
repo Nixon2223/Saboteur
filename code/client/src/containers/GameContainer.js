@@ -7,7 +7,7 @@ import {DragDropContext, Droppable, Draggable} from 'react-beautiful-dnd'
 import { io } from 'socket.io-client'
 
 import {getData} from '../services/FetchService'
-import {setUpPlayers, passTurn, checkForWin, winner, addScore, legalMove} from '../services/GameService'
+import {setUpPlayers, passTurn, checkForWin, winner, addScore, legalMove, flipNeighbours} from '../services/GameService'
 import SplashContainer from './SplashContainer';
 
 function GameContainer({player, playerObjects, gameType, roomID}) {
@@ -94,11 +94,11 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
       for (let card of tile_cardData)
         deck.push(Object.assign({}, card))
     }
-    const blockerCardData = Object.values(data.cards["blocker-cards"])
-    // 1x each blocker
-    for (let card of blockerCardData){
-      deck.push(Object.assign({}, card))
-    }
+    // const blockerCardData = Object.values(data.cards["blocker-cards"])
+    // // 1x each blocker
+    // for (let card of blockerCardData){
+    //   deck.push(Object.assign({}, card))
+    // }
     //randomize inverted
     for (let card of deck){
       card.inverted = Boolean(Math.round(Math.random()))
@@ -255,7 +255,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
       setTimeout
       (function() {
         return setTurnToggle(!turnToggle)
-      }, 1000);
+      }, 100);
     }
     // starts Human turn
     if(playerTurn.active === false){
@@ -367,6 +367,7 @@ const cpuPlay = (hand, grid) => {
         const row = result.destination.droppableId.substring(5,6)
         const col = result.destination.droppableId.substring(7)
         if (legalMove(cardBeingPickedUp, row, col, Object.assign([], gridState)) === true){
+          flipNeighbours(row, col, gridState)
           const tempArr = Object.assign([], gridState)
           tempArr[row].splice([col], 1, playerHand[result.source.index])
           setGridState(tempArr)
