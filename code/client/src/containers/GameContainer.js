@@ -326,7 +326,7 @@ const cpuPlay = (hand, grid) => {
     for (let card of hand){
       for (let col = 10; col > 0; col--){
         for (let row = 6; row > 0; row--){
-          if (legalMove(card, row, col) === true){
+          if (legalMove(card, row, col, gridState) === true){
             grid[row].splice(col, 1, hand[i])
             hand.splice(i, 1)
             return [hand, grid, i]
