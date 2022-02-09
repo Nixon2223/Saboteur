@@ -159,8 +159,12 @@ export const flipNeighbours = (card, gridRow, gridCol, gridState) => {
 
     let i = 0
     for (let neighbour of neighbours){
-        if (Object.keys(neighbour).length !== 0 && 'flipped' in neighbour && cardEntries[i] == true) {
+        if (Object.keys(neighbour).length !== 0 && neighbour.flipped == true && cardEntries[i] == true) {
                 neighbour.flipped = false
+                if (i === 0 && neighbour.entries.bottom !== true) neighbour.inverted = !neighbour.inverted
+                if (i === 1 && neighbour.entries.left !== true) neighbour.inverted = !neighbour.inverted
+                if (i === 2 && neighbour.entries.top !== true) neighbour.inverted = !neighbour.inverted
+                if (i === 3 && neighbour.entries.right !== true) neighbour.inverted = !neighbour.inverted
         }
         i += 1
     }
