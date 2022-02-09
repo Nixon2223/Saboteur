@@ -112,11 +112,11 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     let goldCardRef = []
     const tempArr = gridState
     let startCardsArray = []
-    let tempCoal = Object.assign({}, data.cards.coal_card)
-    tempCoal.inverted = false
-    startCardsArray.push(tempCoal)
+    let tempCoal1 = Object.assign({}, data.cards.coal_card)
+    let tempCoal2 = Object.assign({}, data.cards.coal_card)
+    startCardsArray.push(tempCoal1)
     startCardsArray.push(Object.assign({}, data.cards.gold_card))
-    startCardsArray.push(tempCoal)
+    startCardsArray.push(tempCoal2)
     shuffleArray(startCardsArray)
     tempArr[3].splice(1, 1, Object.assign({}, data.cards["start-card"]))
     tempArr[1].splice(9, 1, startCardsArray[0])
@@ -199,6 +199,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
       setDeck(cpuTurnResult[2]);
       // check for win
       if(checkForWin(gridState, goldCardRef)) {
+        setTurnToggle(!turnToggle)
         winner(playerTurn)
         const result = addScore(players, playerTurn.name)
         setPlayers(result)
@@ -229,6 +230,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
       setPlayerTurn(tempObj);
       // check for win
       if(checkForWin(gridState, goldCardRef)) {
+        setTurnToggle(!turnToggle)
         winner(playerTurn)
         const result = addScore(players, playerTurn.name)
         setPlayers(result)
