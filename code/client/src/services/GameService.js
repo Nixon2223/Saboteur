@@ -127,6 +127,8 @@ const gridNeighbours = (row, col, gridState) => {
 
   const connectionWithTile = (card, gridRow, gridCol, gridState) => {
     let resultNeighboursEntries = neighboursEntries(gridNeighbours(gridRow, gridCol, gridState))
+    let resultGridNeighbours = gridNeighbours(gridRow, gridCol, gridState)
+    console.log(resultGridNeighbours)
     let cardEntries = []
     if (card.inverted){
       cardEntries = [card.entries.bottom, card.entries.left, card.entries.top, card.entries.right]
@@ -136,7 +138,9 @@ const gridNeighbours = (row, col, gridState) => {
     let results = []
     var i = 0
     for (let result of resultNeighboursEntries) {
-      (result === true && cardEntries[i] === true ) ? results.push(true) : results.push(false)
+      if (Object.keys(resultGridNeighbours[i]).length !== 0){
+        (result === true && cardEntries[i] === true && resultGridNeighbours[i].name.substring(0,7) !== "blocker") ? results.push(true) : results.push(false)
+      }else results.push(false)
       i += 1
     }
     //connects [top, right, bottom, left]
@@ -144,7 +148,7 @@ const gridNeighbours = (row, col, gridState) => {
   }
 
 
-export const flipNeighbours = (card, gridRow, gridCol, gridState) => {
+export const flipEndCard = (card, gridRow, gridCol, gridState) => {
     let row = Number(gridRow)
     let col = Number(gridCol)
     let tempGrid = Object.assign([], gridState)

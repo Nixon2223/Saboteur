@@ -136,7 +136,7 @@ db.game.insertOne({
                         "flipped": false
         },
 
-        "blocker-cards": [{  "name" :"block-1",
+        "blocker-cards": [{  "name" :"blocker-1",
                              "entries": {
                                 "top": true,
                                 "right": true,

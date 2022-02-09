@@ -4,10 +4,9 @@ import HandList from '../components/HandList';
 import SideBar from '../components/SideBar';
 import Loading from '../components/Loading'
 import {DragDropContext, Droppable, Draggable} from 'react-beautiful-dnd'
-import { io } from 'socket.io-client'
 
 import {getData} from '../services/FetchService'
-import {setUpPlayers, passTurn, checkForWin, winner, addScore, legalMove, flipNeighbours} from '../services/GameService'
+import {setUpPlayers, passTurn, checkForWin, winner, addScore, legalMove, flipEndCard} from '../services/GameService'
 import SplashContainer from './SplashContainer';
 
 function GameContainer({player, playerObjects, gameType, roomID}) {
@@ -36,42 +35,13 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
       [ {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]    
   ])
 
-  const socket = io('http://localhost:5000', {
-    transports: ["websocket", "polling"],
-    rememberUpgrade: true,
-    maxHttpBufferSize: 1e8,
-
-  });
-
-  useEffect(() => {
-    socket.on('connect', ()=>console.log(socket.id))
-    socket.on('connect_error', ()=>{
-      setTimeout(()=>socket.connect(),5000)
-    })
-    return () => socket.off('connect')
-}, [])
-
   useEffect (() => {
     getData()
     .then(data => setData(data[0]));
 
     setPlayerTurns(playerObjects);
   }, [])
-  
-  useEffect (() => {
-    socket.on('receive-grid-state', gridState => {
-      setGridState(gridState)
-    })
-    socket.on('receive-deck', deck => {
-      setDeck(deck)
-    })
-    return () => {
-      socket.off("receive-grid-state");
-      socket.off("receive-deck")
-    };
-  }, [])
-
-  
+ 
   useEffect(() => {
     if(Object.keys(data).length !== 0){
       setPlayers(Object.assign([], playerTurns));
@@ -89,16 +59,16 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     const deck = []
     const tile_cardData = Object.values(data.cards.tile_cards)
     // Might need to custimise this to reflect true numbers of individual cards!
-    // 5x each tile card
-    for (let step = 0; step < 7; step++){
+    // 7x each tile card
+    for (let step = 0; step < 10; step++){
       for (let card of tile_cardData)
         deck.push(Object.assign({}, card))
     }
-    // const blockerCardData = Object.values(data.cards["blocker-cards"])
-    // // 1x each blocker
-    // for (let card of blockerCardData){
-    //   deck.push(Object.assign({}, card))
-    // }
+    const blockerCardData = Object.values(data.cards["blocker-cards"])
+    // 1x each blocker
+    for (let card of blockerCardData){
+      deck.push(Object.assign({}, card))
+    }
     //randomize inverted
     for (let card of deck){
       card.inverted = Boolean(Math.round(Math.random()))
@@ -106,7 +76,6 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     // Shuffle deck
     shuffleArray(deck);
     setDeck(deck);
-    socket.emit('update-deck', deck);
   }
 
   const shuffleArray = (array) => {
@@ -127,7 +96,6 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     // shuffle chart card
     const shuffledDeck = shuffleCharArray(tempDeck);
     setCharDeck(shuffledDeck);
-    socket.emit('chart-deck', charDeck)
   }
  // shuffle charArray function
   const shuffleCharArray = (array) => {
@@ -159,7 +127,6 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     if(startCardsArray[2].name === "gold_card") goldCardRef = [5, 9]
     setGridState(tempArr)
     setGoldCardRef(goldCardRef)
-    socket.emit('update-grid-state', gridState)
   }
 
   const dealHand = () => {
@@ -211,7 +178,6 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
       setDeck(result[0]);
     }
     setButtonToggle(!buttonToggle)
-    socket.emit('update-deck', deck)
   }
 
   const handleEndClick = () => {
@@ -320,7 +286,7 @@ const cpuPlay = (hand, grid) => {
           if (legalMove(card, row, col, gridState) === true){
             grid[row].splice(col, 1, hand[i])
             hand.splice(i, 1)
-            grid = flipNeighbours(card, row, col, grid)
+            grid = flipEndCard(card, row, col, grid)
             return [hand, grid, i]
           }
         }
@@ -361,9 +327,8 @@ const cpuPlay = (hand, grid) => {
         if (legalMove(cardBeingPickedUp, row, col, Object.assign([], gridState)) === true){
           let tempArr = Object.assign([], gridState)
           tempArr[row].splice([col], 1, playerHand[result.source.index])
-          tempArr = flipNeighbours(cardBeingPickedUp, row, col, tempArr)
+          tempArr = flipEndCard(cardBeingPickedUp, row, col, tempArr)
           setGridState(tempArr)
-          socket.emit('update-grid-state', gridState)
           //Discard from hand
           const items = Array.from(playerHand)
           items.splice(result.source.index, 1)
