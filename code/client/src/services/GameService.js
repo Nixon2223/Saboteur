@@ -2,8 +2,8 @@
 export const setUpCPUPlayers = (playerNames) => {
     const players = playerNames.map((playerName, index) => {
         const player = playerName.replace(/\s/g, '');
-        if(index ===0) return{index: index, id: player, name: playerName, type : "human", score: 0, active: false}
-        else return {index: index, id: player, name: playerName, type : "CPU", hand : [], score: 0, active: false}
+        if(index ===0) return{index: index, id: player, name: playerName, type : "human", score: 0, active: true}
+        else return {index: index, id: player, name: playerName, type : "CPU", hand : [], score: 0}
     })
     return players
 }
@@ -127,7 +127,6 @@ const gridNeighbours = (row, col, gridState) => {
   const connectionWithTile = (card, gridRow, gridCol, gridState) => {
     let resultNeighboursEntries = neighboursEntries(gridNeighbours(gridRow, gridCol, gridState))
     let resultGridNeighbours = gridNeighbours(gridRow, gridCol, gridState)
-    console.log(resultGridNeighbours)
     let cardEntries = []
     if (card.inverted){
       cardEntries = [card.entries.bottom, card.entries.left, card.entries.top, card.entries.right]
