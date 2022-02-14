@@ -6,7 +6,7 @@ import Loading from '../components/Loading'
 import {DragDropContext, Droppable, Draggable} from 'react-beautiful-dnd'
 
 import {getData} from '../services/FetchService'
-import {setUpPlayers, passTurn, checkForWin, winner, addScore, legalMove, flipEndCard} from '../services/GameService'
+import {setUpPlayers, passTurn, checkForWin, winner, addScore, legalMove, flipEndCard, generateTurnDelay} from '../services/GameService'
 import SplashContainer from './SplashContainer';
 
 function GameContainer({player, playerObjects, gameType, roomID}) {
@@ -53,7 +53,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     const tile_cardData = Object.values(data.cards.tile_cards)
     // Might need to custimise this to reflect true numbers of individual cards!
     // 7x each tile card
-    for (let step = 0; step < 7; step++){
+    for (let step = 0; step < 9; step++){
       for (let card of tile_cardData)
         deck.push(Object.assign({}, card))
     }
@@ -178,63 +178,60 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
   }
 
 
-    // controls players turns
-    useEffect(() => {
-      // Don't Start if false
-      if(gameState === false) return
-      //
-      if(players[0].hand.length === 0)
-      players.push(players.shift())
-      setTimeout
-      (function() {
-        return setTurnToggle(!turnToggle)
-      }, 100);
-      // CPU turn
-      if(players[0].type === "CPU"){
-        // play turn
-        const cpuTurnResult = cpuTurn(players[0], gridState, deck) 
-        players[0] = cpuTurnResult[0];
-        setGridState(cpuTurnResult[1]);
-        setDeck(cpuTurnResult[2]);
-        // check for win
-        if(checkForWin(gridState, goldCardRef)) {
-          winner(players[0])
-          const result = addScore(players, players[0].name)
-          setPlayers(result)
-          setGameState(false)
-        }
-        // end turn
-        players.push(players.shift())
-        setTimeout
-        (function() {
-          return setTurnToggle(!turnToggle)
-        }, 100);
-      }
-
-      // ends Human turn
-      if(players[0].type === "human") if (players[0].active === false){
-        // stop human from placing any more cards on grid
-        const tempObj = Object.assign({}, players[0]);
-        players[0] = tempObj
-        // check for win
-        if(checkForWin(gridState, goldCardRef)) {
-          winner(players[0])
-          const result = addScore(players, players[0].name)
-          setPlayers(result)
-          setGameState(false)
-        }
-        players[0].active = true
-        // pick up a card
-        dealCard();
-        // pass turn to next player
-        players.push(players.shift())
-        setTimeout
-        (function() {
-          return setTurnToggle(!turnToggle)
-        }, 100);
-      }
-      
-    }, [gameState, turnToggle])
+        // controls players turns
+        useEffect(() => {
+          // Don't Start if false
+          if(gameState === false) return
+          //
+          if(players[0].hand.length === 0)
+          setTimeout
+          (function() {
+            players.push(players.shift())
+            return setTurnToggle(!turnToggle)
+          }, 100);
+          // CPU turn
+          if(players[0].type === "CPU"){
+            // play turn
+            setTimeout
+            (function() {
+            const cpuTurnResult = cpuTurn(players[0], gridState, deck) 
+            players[0] = cpuTurnResult[0];
+            setGridState(cpuTurnResult[1]);
+            setDeck(cpuTurnResult[2]);
+            // check for win
+            if(checkForWin(gridState, goldCardRef)) {
+              winner(players[0])
+              const result = addScore(players, players[0].name)
+              setPlayers(result)
+              setGameState(false)
+            }
+            // end turn
+              players.push(players.shift())
+              return setTurnToggle(!turnToggle)
+            }, generateTurnDelay(750, 2200));
+          }
+    
+          // ends Human turn
+          if(players[0].type === "human") if (players[0].active === false){
+            // stop human from placing any more cards on grid
+            const tempObj = Object.assign({}, players[0]);
+            players[0] = tempObj
+            // check for win
+            if(checkForWin(gridState, goldCardRef)) {
+              winner(players[0])
+              const result = addScore(players, players[0].name)
+              setPlayers(result)
+              setGameState(false)
+            }
+            players[0].active = true
+            // pick up a card
+            dealCard();
+            // pass turn to next player
+            players.push(players.shift())
+            setTurnToggle(!turnToggle)
+          }
+          
+        }, [gameState, turnToggle])
 
   const reorderHand = (hand) => {
     setPlayerHand(hand)

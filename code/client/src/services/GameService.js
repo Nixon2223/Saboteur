@@ -191,3 +191,8 @@ export const legalMove = (cardSelected, gridRow, gridCol, gridState) => {
     } 
     else return false
   }
+
+  export const generateTurnDelay = (min, max) => {
+    console.log(Math.floor((Math.random() * max) + min))
+    return Math.floor((Math.random() * max) + min)
+  }
