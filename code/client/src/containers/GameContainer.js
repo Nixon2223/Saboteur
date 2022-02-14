@@ -52,7 +52,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     const tile_cardData = Object.values(data.cards.tile_cards)
     // Might need to custimise this to reflect true numbers of individual cards!
     // 7x each tile card
-    for (let step = 0; step < 7; step++){
+    for (let step = 0; step < 9; step++){
       for (let card of tile_cardData)
         deck.push(Object.assign({}, card))
     }
@@ -177,20 +177,29 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
   }
 
 
+  const generateTurnDelay = (min, max) => {
+    console.log(Math.floor((Math.random() * max) + min))
+    return Math.floor((Math.random() * max) + min)
+  }
+
+
+
     // controls players turns
     useEffect(() => {
       // Don't Start if false
       if(gameState === false) return
       //
       if(players[0].hand.length === 0)
-      players.push(players.shift())
       setTimeout
       (function() {
+        players.push(players.shift())
         return setTurnToggle(!turnToggle)
       }, 100);
       // CPU turn
       if(players[0].type === "CPU"){
         // play turn
+        setTimeout
+        (function() {
         const cpuTurnResult = cpuTurn(players[0], gridState, deck) 
         players[0] = cpuTurnResult[0];
         setGridState(cpuTurnResult[1]);
@@ -203,11 +212,9 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
           setGameState(false)
         }
         // end turn
-        players.push(players.shift())
-        setTimeout
-        (function() {
+          players.push(players.shift())
           return setTurnToggle(!turnToggle)
-        }, 1000);
+        }, generateTurnDelay(750, 2200));
       }
 
       // ends Human turn
@@ -227,10 +234,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
         dealCard();
         // pass turn to next player
         players.push(players.shift())
-        setTimeout
-        (function() {
-          return setTurnToggle(!turnToggle)
-        }, 1000);
+        setTurnToggle(!turnToggle)
       }
       
     }, [gameState, turnToggle])
