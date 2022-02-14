@@ -4,10 +4,9 @@ import HandList from '../components/HandList';
 import SideBar from '../components/SideBar';
 import Loading from '../components/Loading'
 import {DragDropContext, Droppable, Draggable} from 'react-beautiful-dnd'
-import { io } from 'socket.io-client'
 
 import {getData} from '../services/FetchService'
-import {setUpPlayers, passTurn, checkForWin, winner, addScore} from '../services/GameService'
+import {setUpPlayers, passTurn, checkForWin, winner, addScore, legalMove, flipEndCard, generateTurnDelay} from '../services/GameService'
 import SplashContainer from './SplashContainer';
 
 function GameContainer({player, playerObjects, gameType, roomID}) {
@@ -23,8 +22,6 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
   const [charDeck, setCharDeck] = useState([])
   const [nuggDeck, setNuggDeck] = useState([])
   const [players, setPlayers] = useState([])
-  const [playerTurns, setPlayerTurns] = useState([])
-  const [playerTurn, setPlayerTurn] = useState({})
   const [turnToggle, setTurnToggle] = useState(true)
   const [gridState, setGridState] = useState([
       [ {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
@@ -36,48 +33,14 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
       [ {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]    
   ])
 
-  const socket = io('http://localhost:5000', {
-    transports: ["websocket", "polling"],
-    rememberUpgrade: true,
-    maxHttpBufferSize: 1e8,
-
-  });
-
-  useEffect(() => {
-    socket.on('connect', ()=>console.log(socket.id))
-    socket.on('connect_error', ()=>{
-      setTimeout(()=>socket.connect(),5000)
-    })
-    return () => socket.off('connect')
-}, [])
-
   useEffect (() => {
     getData()
     .then(data => setData(data[0]));
-
-    setPlayerTurns(playerObjects);
   }, [])
-  
-  useEffect (() => {
-    socket.on('receive-grid-state', gridState => {
-      setGridState(gridState)
-    })
-    socket.on('receive-deck', deck => {
-      setDeck(deck)
-    })
-    return () => {
-      socket.off("receive-grid-state");
-      socket.off("receive-deck")
-    };
-  }, [])
-
-  
+ 
   useEffect(() => {
     if(Object.keys(data).length !== 0){
-      setPlayers(Object.assign([], playerTurns));
-      // shift out first object to set the player to start the game
-      const playerTurn = playerTurns.shift();
-      setPlayerTurn(playerTurn);
+      setPlayers(Object.assign([], playerObjects));
       buildDeck();
       buildCharDeck();
       placeStartCards();
@@ -89,8 +52,8 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     const deck = []
     const tile_cardData = Object.values(data.cards.tile_cards)
     // Might need to custimise this to reflect true numbers of individual cards!
-    // 5x each tile card
-    for (let step = 0; step < 7; step++){
+    // 7x each tile card
+    for (let step = 0; step < 9; step++){
       for (let card of tile_cardData)
         deck.push(Object.assign({}, card))
     }
@@ -106,7 +69,6 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     // Shuffle deck
     shuffleArray(deck);
     setDeck(deck);
-    socket.emit('update-deck', deck);
   }
 
   const shuffleArray = (array) => {
@@ -117,8 +79,6 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
       [array[currentIndex], array[randomIndex]] = [
         array[randomIndex], array[currentIndex]];
     }
-    setDeck(deck)
-    
     return array
   }
 
@@ -129,7 +89,6 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     // shuffle chart card
     const shuffledDeck = shuffleCharArray(tempDeck);
     setCharDeck(shuffledDeck);
-    socket.emit('chart-deck', charDeck)
   }
  // shuffle charArray function
   const shuffleCharArray = (array) => {
@@ -146,11 +105,11 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     let goldCardRef = []
     const tempArr = gridState
     let startCardsArray = []
-    let tempCoal = Object.assign({}, data.cards.coal_card)
-    tempCoal.inverted = false
-    startCardsArray.push(tempCoal)
+    let tempCoal1 = Object.assign({}, data.cards.coal_card)
+    let tempCoal2 = Object.assign({}, data.cards.coal_card)
+    startCardsArray.push(tempCoal1)
     startCardsArray.push(Object.assign({}, data.cards.gold_card))
-    startCardsArray.push(tempCoal)
+    startCardsArray.push(tempCoal2)
     shuffleArray(startCardsArray)
     tempArr[3].splice(1, 1, Object.assign({}, data.cards["start-card"]))
     tempArr[1].splice(9, 1, startCardsArray[0])
@@ -161,7 +120,6 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     if(startCardsArray[2].name === "gold_card") goldCardRef = [5, 9]
     setGridState(tempArr)
     setGoldCardRef(goldCardRef)
-    socket.emit('update-grid-state', gridState)
   }
 
   const dealHand = () => {
@@ -174,7 +132,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
   const dealCPUhands = (cpuPlayers, deck) => {
     let tempDeck = deck;
     let tempPlayers = cpuPlayers;
-    let cpuHands = []
+    console.log(tempPlayers)
     for (let i=0; i < tempPlayers.length; i++){
       tempPlayers[i].hand = tempDeck.splice(0,5)
     }
@@ -207,13 +165,10 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     dealChar();
     // if single player mode deal CPU hands
     if(gameType === "single"){
-
-      const result = dealCPUhands(playerTurns, deck);
-      setPlayerTurns(result[1]);
+      const result = dealCPUhands(players, deck);
       setDeck(result[0]);
     }
     setButtonToggle(!buttonToggle)
-    socket.emit('update-deck', deck)
   }
 
   const handleEndClick = () => {
@@ -222,80 +177,67 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
     }
   }
 
-  function wait(milliseconds) {
-    var start = new Date().getTime();
-    for (var i = 0; i < 1e7; i++) {
-      if ((new Date().getTime() - start) > milliseconds){
-        break;
-      }
-    }
-  }
 
-  // controls players turns
-  useEffect(() => {
-    // Don't Start if false
-    if(gameState === false) return
-    // CPU turn
-    if(playerTurn.type === "CPU"){
-      // play turn
-      const cpuTurnResult = cpuTurn(playerTurn, gridState, deck) 
-      setPlayerTurn(cpuTurnResult[0]);
-      setGridState(cpuTurnResult[1]);
-      setDeck(cpuTurnResult[2]);
-      // check for win
-      if(checkForWin(gridState, goldCardRef)) {
-        winner(playerTurn)
-        const result = addScore(players, playerTurn.name)
-        setPlayers(result)
-        setGameState(false)
-      }
-      // end turn
-      const result = passTurn(playerTurn, playerTurns)
-      //pass turn to next player
-      setPlayerTurn(result[0]);
-      setPlayerTurns(result[1]);
-      setTimeout
-      (function() {
-        return setTurnToggle(!turnToggle)
-      }, 1000);
-    }
-    // starts Human turn
-    if(playerTurn.active === false){
-      const tempObj = Object.assign({}, playerTurn);
-      tempObj.active = true;
-      setPlayerTurn(tempObj);
-      return
-    }
-    // ends Human turn
-    if(playerTurn.active === true && playerHand.length < 5 ){
-      // stop human from placing any more cards on grid
-      const tempObj = Object.assign({}, playerTurn);
-      tempObj.active = false;
-      setPlayerTurn(tempObj);
-      // check for win
-      if(checkForWin(gridState, goldCardRef)) {
-        winner(playerTurn)
-        const result = addScore(players, playerTurn.name)
-        setPlayers(result)
-        setGameState(false)
-      }
-      // pass turn to next player
-      const result = passTurn(playerTurn, playerTurns)
-      setPlayerTurn(result[0]);
-      setPlayerTurns(result[1]);
-      // pick up a card
-      dealCard();
-      return setTurnToggle(!turnToggle)
-    }
+        // controls players turns
+        useEffect(() => {
+          // Don't Start if false
+          if(gameState === false) return
+          //
+          if(players[0].hand.length === 0)
+          setTimeout
+          (function() {
+            players.push(players.shift())
+            return setTurnToggle(!turnToggle)
+          }, 100);
+          // CPU turn
+          if(players[0].type === "CPU"){
+            // play turn
+            setTimeout
+            (function() {
+            const cpuTurnResult = cpuTurn(players[0], gridState, deck) 
+            players[0] = cpuTurnResult[0];
+            setGridState(cpuTurnResult[1]);
+            setDeck(cpuTurnResult[2]);
+            // check for win
+            if(checkForWin(gridState, goldCardRef)) {
+              winner(players[0])
+              const result = addScore(players, players[0].name)
+              setPlayers(result)
+              setGameState(false)
+            }
+            // end turn
+              players.push(players.shift())
+              return setTurnToggle(!turnToggle)
+            }, generateTurnDelay(750, 2200));
+          }
     
-  }, [gameState, turnToggle])
-  
-  
+          // ends Human turn
+          if(players[0].type === "human") if (players[0].active === false){
+            // stop human from placing any more cards on grid
+            const tempObj = Object.assign({}, players[0]);
+            players[0] = tempObj
+            // check for win
+            if(checkForWin(gridState, goldCardRef)) {
+              winner(players[0])
+              const result = addScore(players, players[0].name)
+              setPlayers(result)
+              setGameState(false)
+            }
+            players[0].active = true
+            // pick up a card
+            dealCard();
+            // pass turn to next player
+            players.push(players.shift())
+            setTurnToggle(!turnToggle)
+          }
+          
+        }, [gameState, turnToggle])
 
   const reorderHand = (hand) => {
     setPlayerHand(hand)
   }
 
+<<<<<<< HEAD
   const gridNeighbours = (row, col) => {
     let neighbours = []
     row = Number(row)
@@ -452,6 +394,8 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
 
 
 
+=======
+>>>>>>> 8160976
   const cpuTurn = (cpuPlayer, grid, deck) => {
     const tempDeck = Object.assign([], deck);
     const tempCpu = Object.assign({}, cpuPlayer);
@@ -464,13 +408,13 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
             randomIndex = Math.floor(Math.random() * tempCpu.hand.length);
         }
         tempCpu.hand.splice(randomIndex, 1)
-        tempCpu.hand.push(tempDeck[0])
+        if (tempDeck.length > 0) tempCpu.hand.push(tempDeck[0])
         tempDeck.shift()
         return [tempCpu, grid, tempDeck]
     }
 
     tempCpu.hand.splice([cpuPlayResult[2]], 1)
-    tempCpu.hand.push(tempDeck[0])
+    if (tempDeck.length > 0) tempCpu.hand.push(tempDeck[0])
     tempDeck.shift()
     const newGrid = cpuPlayResult[1]
 
@@ -481,40 +425,29 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
 
 const cpuPlay = (hand, grid) => {
     let i = 0
-    for (let card of hand){
-      for (let col = 10; col > 0; col--){
-        for (let row = 6; row > 0; row--){
-          if (legalMove(card, row, col) === true){
+      for (let col = 10; col >= 0; col--){
+        for (let row = 6; row >= 0; row--){
+          for (let card of hand){
+            let invertedCard = card
+            invertedCard.inverted = !invertedCard.inverted
+          if (legalMove(card, row, col, gridState) === true){
             grid[row].splice(col, 1, hand[i])
-            hand.splice(i, 1)
+            grid = flipEndCard(card, row, col, grid)
             return [hand, grid, i]
           }
+          if (legalMove(invertedCard, row, col, gridState) === true){
+            grid[row].splice(col, 1, hand[i])
+            grid = flipEndCard(card, row, col, grid)
+            return [hand, grid, i]
+          }
+          i += 1
         }
+        i = 0
       }
-    i += 1
+    
     }
     return []
 }
-
-
-
-
-  const legalMove = (cardSelected, gridRow, gridCol) => {
-    // check that card being placed boarders a tile card
-    if (!boarderTileCard(gridRow, gridCol)) return console.log("Cant be placed here!")
-    // check if card makes path with at least one bordering card
-    if (!checkIfMakesPath(cardSelected, gridRow, gridCol)) return console.log("Cant be placed here!")
-    // check if card is already placed in grid location
-    if (Object.keys(gridState[gridRow][gridCol]).length !== 0) return console.log("Card already placed here!")
-    // check if card fits in grid position with neighbours
-    else if (cardFitsNeighbours(cardSelected, gridNeighbours(gridRow, gridCol))){
-      // check for end card
-      checkFlipEndCard(gridRow, gridCol)
-      return true
-    } 
-    else return false
-  }
-
 
   function handleOnDragEnd(result){
 
@@ -522,11 +455,12 @@ const cpuPlay = (hand, grid) => {
 
     if (!result.destination) return
     else if (result.destination.droppableId === "discard"){
-      if(playerTurn.id === playerID && playerTurn.active === true){
+      if(players[0].id === playerID){
         const items = Array.from(playerHand)
         items.splice(result.source.index, 1)
         reorderHand(items)
         // player places card on the grid -> toggle to trigger end of turn
+        players[0].active = false
         setTurnToggle(!turnToggle)
       }
       return
@@ -540,20 +474,21 @@ const cpuPlay = (hand, grid) => {
     }
     else if (result.destination.droppableId.substring(0, 4) === "grid"){
       // if user is active and it's their turn
-      if(playerTurn.id === playerID && playerTurn.active === true){
+      if(players[0].id === playerID){
         const cardBeingPickedUp = playerHand[result.source.index]
         const row = result.destination.droppableId.substring(5,6)
         const col = result.destination.droppableId.substring(7)
-        if (legalMove(cardBeingPickedUp, row, col) === true){
-          const tempArr = gridState
+        if (legalMove(cardBeingPickedUp, row, col, Object.assign([], gridState)) === true){
+          let tempArr = Object.assign([], gridState)
           tempArr[row].splice([col], 1, playerHand[result.source.index])
+          tempArr = flipEndCard(cardBeingPickedUp, row, col, tempArr)
           setGridState(tempArr)
-          socket.emit('update-grid-state', gridState)
           //Discard from hand
           const items = Array.from(playerHand)
           items.splice(result.source.index, 1)
           reorderHand(items)
           // player places card on the grid -> toggle to trigger end of turn
+          players[0].active = false
           setTurnToggle(!turnToggle)
         } 
       } 
@@ -570,7 +505,6 @@ const cpuPlay = (hand, grid) => {
     setClickToggle(!clickToggle);
   }
 
-
   if(Object.keys(data).length === 0){
     return <Loading/>
   } else {
@@ -581,7 +515,7 @@ const cpuPlay = (hand, grid) => {
 
           <GameGrid  gridState={gridState}/>   
           <HandList player={player} cards={playerHand} char={playerChar} reorderHand = {reorderHand} handleOnClickInvert = {handleOnClickInvert}/> 
-          <SideBar deck={deck} charDeck={charDeck} backs={data.cards.card_backs} startClick={buttonToggle ? handleEndClick : handleStartClick} buttonToggle={buttonToggle} players={players} playerTurn= {playerTurn}/>
+          <SideBar deck={deck} charDeck={charDeck} backs={data.cards.card_backs} startClick={buttonToggle ? handleEndClick : handleStartClick} buttonToggle={buttonToggle} players={players} playerTurn= {players[0]}/>
 
         </DragDropContext>
         

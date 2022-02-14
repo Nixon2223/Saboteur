@@ -1,9 +1,19 @@
 import React from 'react';
 import Player from './Player';
-import {DragDropContext, Droppable, Draggable} from 'react-beautiful-dnd'
 
 const SideBar = ({deck, charDeck, backs, startClick, buttonToggle, players, playerTurn}) => {
-    const playerNodes = players.map((player, index) => {
+
+    //order players by index
+    let tempPLayers = Object.assign([], players)
+    tempPLayers = tempPLayers.sort(function(a, b) {
+        var keyA = (a.index),
+        keyB = (b.index);
+        if (keyA < keyB) return -1;
+        if (keyA > keyB) return 1;
+        return 0;
+      });
+
+    const playerNodes = tempPLayers.map((player, index) => {
         return <Player playerName={player.name} score={player.score} key={index} playerTurn={playerTurn} index ={player.index}/>
     })
 
