@@ -207,7 +207,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
         setTimeout
         (function() {
           return setTurnToggle(!turnToggle)
-        }, 100);
+        }, 1000);
       }
 
       // ends Human turn
@@ -230,7 +230,7 @@ function GameContainer({player, playerObjects, gameType, roomID}) {
         setTimeout
         (function() {
           return setTurnToggle(!turnToggle)
-        }, 100);
+        }, 1000);
       }
       
     }, [gameState, turnToggle])
